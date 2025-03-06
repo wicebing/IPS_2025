@@ -189,7 +189,7 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
 def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
     for i, evt in events.iterrows():
         
-        # if i < 22: continue
+        if i < 67: continue
         print(f' == work on {i} event == ')
         positionTime = evt['positionTime']
         e_x = evt['X']
@@ -228,4 +228,4 @@ events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 with open("../databank/pkl/filter01.pkl", 'rb') as f:
     txyzPds = pickle.load(f)   
 
-heatmap_plot(events, txyzPds,3,'heatmap_0',grid=False)       
+heatmap_plot(events, txyzPds,1,'heatmap_0',grid=False)       
