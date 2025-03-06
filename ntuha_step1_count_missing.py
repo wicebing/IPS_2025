@@ -165,10 +165,3 @@ def export_lossTick_to_excel(lossTick, output_filename="../output/lossTick_repor
 
 # Example usage:
 export_lossTick_to_excel(lossTick)
-
-#only need ['positionTime', 'x', 'y', 'z']
-aap = {}
-for k,v in aa.items():
-    aap[k] = v[['positionTime', 'x', 'y', 'z']]
-with open("../databank/pkl/filter_dt_02.pkl", 'wb') as f:
-    pickle.dump(aap, f)

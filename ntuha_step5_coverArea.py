@@ -112,7 +112,12 @@ with open("../databank/pkl/filter_dt_02.pkl", 'rb') as f:
     txyzPds = pickle.load(f)
 
 aao = []
-# Load the beacon positionTime
+
+for k,v in txyzPds.items():
+    print(f' == load {k} == ')
+    aao.append(v)
+
+
 for k in beacon_ids:
     print(f' == load {k} == ')
     with open(f"../databank/pkl/filter02_gridxy_{k}.pkl", 'rb') as f:
