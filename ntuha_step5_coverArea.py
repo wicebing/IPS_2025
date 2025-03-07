@@ -231,7 +231,7 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
     akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
     akk = akk.reset_index()
     akk = akk.pivot(columns='weekday', index='hour')
-    akk.to_csv('../output/areaPct_report_bydayhour.csv')
+    akk.to_csv(f'../output/areaPct_report_bydayhour_exp{expand}_{before_event_minutes}hr.csv')
 
     # plot_coords(aa3)
 
@@ -266,7 +266,7 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
         plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
         plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
 
-    plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_hour}hr.csv')
+    plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}hr.csv')
 
 for expand in range(1, 6):
     for before_event_minutes in [15,30,60,90,120,180]:
