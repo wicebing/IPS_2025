@@ -78,6 +78,8 @@ combined_beacons = pd.concat(aao,axis=0, ignore_index=True)
 
 # Group by id_mins and aggregate axis (coordinates) into a list
 byMin_coverArea = combined_beacons.groupby('id_mins').agg({'axis': lambda x: list(x)})
+# sort by id_mins, that is index
+byMin_coverArea = byMin_coverArea.sort_index()
 byMin_coverArea = byMin_coverArea.reset_index()
 byMin_coverArea.loc[:,['axis']] = byMin_coverArea['axis'].apply(set).apply(list)
 
@@ -100,11 +102,15 @@ byMin_coverArea.loc[:,['axis']] = byMin_coverArea['axis'].apply(set).apply(list)
 #                        continue  # Skip the corner cells.
 #                 axis_values.append((x_index, y_index)) # Store as tuples
 #         return axis_values
+
+expand = 2
+before_event_hour = 1
+
 aa2 = byMin_coverArea.copy()
 aa2.loc[:, ['axis_agg']] = aa2['axis'].apply(lambda k: reduce(lambda a, b: a.union(b), [
     set([(max(0, min(24, i)), max(0, min(24, j)))  # Clamp i and j
-         for i in range(x - 2, x + 3)
-         for j in range(y - 2, y + 3)])
+         for i in range(x - expand, x + expand+1)
+         for j in range(y - expand, y + expand+1)])
     for x, y in k]))
 
 def plot_coords(aa2, grid=False):
@@ -167,8 +173,52 @@ def plot_coords(aa2, grid=False):
         plt.savefig(fname=pic_filepath)
         print(f' === complete {id_mins} image === ')
 
-plot_coords(aa2)
+# plot_coords(aa2)
+
+aa3 = aa2.copy()
+aa3.loc[:,['axis_agg']] = aa3['axis_agg'].apply(lambda x: x - remove_coords)
+aa3['corrd_number'] = aa3['axis_agg'].apply(len)
+aa3['cover_area_pct'] = aa3['corrd_number']/len(all_area_coords)
+
+aa3['weekday'] = aa3['id_mins'].dt.weekday
+aa3['hour'] = aa3['id_mins'].dt.hour
+
+akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
+akk = akk.reset_index()
+akk = akk.pivot(columns='weekday', index='hour')
+akk.to_csv('../output/areaPct_report_bydayhour.csv')
 
 
 
+# Load the event timePoint
+events = pd.read_excel("../databank/events_2025_d.xlsx")
+events['日期'] = events['日期'].astype(str)
+events['時間'] = events['時間'].astype(str)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
+
+plot_data = aa3.copy().set_index('id_mins')
+plot_data['event_f'] = 0
+plot_data['event_c'] = 0
+for i, evt in events.iterrows():
+    print(f' == work on {i} event == ')
+    positionTime = evt['positionTime']
+    evt_x = evt['X']
+    evt_y = evt['Y']
+    evt_what = evt['事件分類']
+    發生地點 = evt['發生地點']
+    endtime = positionTime-datetime.timedelta(minutes=5)
+    startTime = endtime-datetime.timedelta(hours=before_event_hour)
+    
+    # fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
+    
+    # x_consecutive = plot_data.loc[startTime:endtime,['cover_area_pct']]
+    
+    # ax = x_consecutive.plot(figsize=(30,10),ylim=(0,1))
+    # plt.savefig(fname=f'./output/areaPct/{i}_{evt_what}.png')
+
+    plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
+    plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
+
+plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_hour}hr.csv')
