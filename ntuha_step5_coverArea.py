@@ -43,7 +43,7 @@ for i in range(8):   # grid_x <= 7 (0-7)
     for j in range(16, 25):  # grid_y >= 16
         remove_coords.add((j, i))
 for i in range(3):   # grid_x <= 7 (0-7)
-    for j in range(13, 16):  # grid_y >= 16
+    for j in range(12, 16):  # grid_y >= 16
         remove_coords.add((j, i))
 for i in range(4,17):   # grid_x <= 7 (0-7)
     for j in range(5):  # grid_y >= 16
