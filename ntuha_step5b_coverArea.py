@@ -5,7 +5,6 @@ import datetime,os,math, pytz, json, pickle
 from functools import reduce
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import matplotlib.patches as mpatches
 import matplotlib.colors as mcolors
 from matplotlib.colors import to_rgb, to_rgba
 
@@ -61,7 +60,7 @@ def preprocess_1(df, time_col='positionTime'):
     df['id_mins'] = df[time_col].dt.round('min')
     df['grid_x'] = np.floor(df['x']).astype(int)
     df['grid_y'] = np.floor(df['y']).astype(int)
-    df['axis'] = tuple(zip(df['grid_y'], df['grid_x']))
+    df['axis'] = tuple(zip(df['grid_x'], df['grid_y']))
 
     return df
 
@@ -101,73 +100,71 @@ byMin_coverArea.loc[:,['axis']] = byMin_coverArea['axis'].apply(set).apply(list)
 #                 axis_values.append((x_index, y_index)) # Store as tuples
 #         return axis_values
 aa2 = byMin_coverArea.copy()
-aa2.loc[:, ['axis_agg']] = aa2['axis'].apply(lambda k: reduce(lambda a, b: a.union(b), [
+aa2.loc[:, ['axis']] = aa2['axis'].apply(lambda k: reduce(lambda a, b: a.union(b), [
     set([(max(0, min(24, i)), max(0, min(24, j)))  # Clamp i and j
          for i in range(x - 2, x + 3)
          for j in range(y - 2, y + 3)])
     for x, y in k]))
 
-def plot_coords(aa2, grid=False):
-    for i, row in aa2.iterrows():
-        id_mins = row['id_mins']
-        axis_agg = row['axis_agg']
-        axis = row['axis']
 
-        x_min=302491 - 302491
-        x_max=302516 - 302491
-        y_min=2770397 - 2770397
-        y_max=2770422 - 2770397
-        scale = 45
-        grid_size = 45
 
-        # Load the image
-        img = Image.open('../databank/ED_Area.png')
-        img_array = np.array(img)
-        img_array = np.flipud(img_array)
+        
+print(f' == concat == ')
+combined_beacons = pd.concat(aao,axis=0, ignore_index=True)
+print(f' == group_last == ')
+byhour_coverArea =combined_beacons.groupby('id_mins')['axis'].sum()
 
-        heatmap_rows = img_array.shape[0] // grid_size
-        heatmap_cols = img_array.shape[1] // grid_size
+byhour_coverArea = byhour_coverArea.sort_index().reset_index()
+byhour_coverArea.loc[:,['axis']] = byhour_coverArea['axis'].apply(set)
 
-        fig, ax = plt.subplots(figsize=(10, 10))  # adjust figsize for better view
-        ax.imshow(img_array)
+aa3 = byhour_coverArea.copy()
+aa3.loc[:,['axis']] = aa3['axis'].apply(lambda x: x - remove_coords)
+aa3['corrd_number'] = aa3['axis'].apply(len)
+aa3['cover_area_pct'] = aa3['corrd_number']/len(all_area_coords)
 
-        # Draw coordinates in axis_agg
-        for coord in axis_agg:
-            x, y = coord
-            rect = mpatches.Rectangle((y * grid_size, x * grid_size), grid_size, grid_size,
-                                      alpha=0.5, facecolor='yellow', edgecolor='yellow')
-            ax.add_patch(rect)
+aa3['weekday'] = aa3['id_mins'].dt.weekday
+aa3['hour'] = aa3['id_mins'].dt.hour
 
-        # Highlight coordinates in axis
-        for coord in axis:
-            x, y = coord
-            rect = mpatches.Rectangle((y * grid_size, x * grid_size), grid_size, grid_size,
-                                      alpha=0.5, facecolor='red', edgecolor='red')
-            ax.add_patch(rect)
+akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
+akk = akk.reset_index()
+akk = akk.pivot(columns='weekday', index='hour')
+akk.to_csv('./output/areaPct_report_bydayhour.csv')
 
-        # Set plot limits
-        major_ticks = np.arange(0, 1125, grid_size)
-        ax.grid(which='major', alpha=0.5, linestyle='--')
-        ax.set_xticks(major_ticks)
-        ax.set_yticks(major_ticks)
-        if not grid:
-            plt.xticks([])
-            plt.yticks([])
 
-        ax.set_xlim(0, scale * (x_max - x_min))
-        ax.set_ylim(0, scale * (y_max - y_min))
 
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_title(f'Position heatmap_{id_mins.strftime("%Y%m%d_%H%M")}')
+# Load the event timePoint
+events = pd.read_excel("./guider20240808/databank/events.xlsx")
+events['日期'] = events['日期'].astype(str)
+events['時間'] = events['時間'].astype(str)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
-        pic_filepath = f'../output/coords/{id_mins.strftime("%Y%m%d_%H%M")}.png'
-        os.makedirs(os.path.dirname(pic_filepath), exist_ok=True)
 
-        plt.savefig(fname=pic_filepath)
-        print(f' === complete {id_mins} image === ')
+plot_data = aa3.copy().set_index('id_mins')
+plot_data['event'] = 0
+for i, evt in events.iterrows():
+    print(f' == work on {i} event == ')
+    positionTime = evt['positionTime']
+    evt_x = evt['X']
+    evt_y = evt['Y']
+    evt_what = evt['事件分類']
+    發生地點 = evt['發生地點']
+    endtime = positionTime-datetime.timedelta(minutes=5)
+    startTime = endtime-datetime.timedelta(hours=6)
+    
+    fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
+    
+    x_consecutive = plot_data.loc[startTime:endtime,['cover_area_pct']]
+    
+    ax = x_consecutive.plot(figsize=(30,10),ylim=(0,1))
+    plt.savefig(fname=f'./output/areaPct/{i}_{evt_what}.png')
 
-plot_coords(aa2)
+    plot_data.loc[startTime:endtime,['event']] = 1 if evt_what=='轉重症' else 2
+
+
+# plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event']].dropna().to_csv('./analysis/areaPct.csv')
+# jjj2 = plot_data.groupby('event').agg({'cover_area_pct': ['mean','std']})
+# print(jjj2)
 
 
 
