@@ -100,16 +100,6 @@ byMin_coverArea.loc[:,['axis']] = byMin_coverArea['axis'].apply(set).apply(list)
 #                 axis_values.append((x_index, y_index)) # Store as tuples
 #         return axis_values
 
-expand = 2
-before_event_hour = 1
-
-aa2 = byMin_coverArea.copy()
-aa2.loc[:, ['axis_agg']] = aa2['axis'].apply(lambda k: reduce(lambda a, b: a.union(b), [
-    set([(max(0, min(24, i)), max(0, min(24, j)))  # Clamp i and j
-         for i in range(x - expand, x + expand+1)
-         for j in range(y - expand, y + expand+1)])
-    for x, y in k]))
-
 def plot_coords(aa2, grid=False):
     for i, row in aa2.iterrows():
         id_mins = row['id_mins']
@@ -170,7 +160,8 @@ def plot_coords(aa2, grid=False):
         plt.savefig(fname=pic_filepath)
         print(f' === complete {id_mins} image === ')
 
-# plot_coords(aa2)
+# plot_coords(aa2) plot_all_area_coords()
+
 
 # i want to plot all_area_coords on the background map to check it
 def plot_all_area_coords():
@@ -220,52 +211,63 @@ def plot_all_area_coords():
     plt.savefig(fname=pic_filepath)
     print(f' === complete all_area_coords image === ')
 
-plot_all_area_coords()
 
-aa3 = aa2.copy()
-aa3.loc[:,['axis_agg']] = aa3['axis_agg'].apply(lambda x: x - remove_coords)
-aa3['corrd_number'] = aa3['axis_agg'].apply(len)
-aa3['cover_area_pct'] = aa3['corrd_number']/len(all_area_coords)
+def get_analyze_data(df, expand=3, before_event_minutes=60):
+    aa2 = df.copy()
+    aa2.loc[:, ['axis_agg']] = aa2['axis'].apply(lambda k: reduce(lambda a, b: a.union(b), [
+        set([(max(0, min(24, i)), max(0, min(24, j)))  # Clamp i and j
+            for i in range(x - expand, x + expand+1)
+            for j in range(y - expand, y + expand+1)])
+        for x, y in k]))
 
-aa3['weekday'] = aa3['id_mins'].dt.weekday
-aa3['hour'] = aa3['id_mins'].dt.hour
+    aa3 = aa2.copy()
+    aa3.loc[:,['axis_agg']] = aa3['axis_agg'].apply(lambda x: x - remove_coords)
+    aa3['corrd_number'] = aa3['axis_agg'].apply(len)
+    aa3['cover_area_pct'] = aa3['corrd_number']/len(all_area_coords)
 
-akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
-akk = akk.reset_index()
-akk = akk.pivot(columns='weekday', index='hour')
-akk.to_csv('../output/areaPct_report_bydayhour.csv')
+    aa3['weekday'] = aa3['id_mins'].dt.weekday
+    aa3['hour'] = aa3['id_mins'].dt.hour
 
-# plot_coords(aa3)
+    akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
+    akk = akk.reset_index()
+    akk = akk.pivot(columns='weekday', index='hour')
+    akk.to_csv('../output/areaPct_report_bydayhour.csv')
 
-# Load the event timePoint
-events = pd.read_excel("../databank/events_2025_d.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
-events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
-events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
+    # plot_coords(aa3)
+
+    # Load the event timePoint
+    events = pd.read_excel("../databank/events_2025_d.xlsx")
+    events['日期'] = events['日期'].astype(str)
+    events['時間'] = events['時間'].astype(str)
+    events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+    events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
 
-plot_data = aa3.copy().set_index('id_mins')
-plot_data['event_f'] = 0
-plot_data['event_c'] = 0
-for i, evt in events.iterrows():
-    print(f' == work on {i} event == ')
-    positionTime = evt['positionTime']
-    evt_x = evt['X']
-    evt_y = evt['Y']
-    evt_what = evt['事件分類']
-    發生地點 = evt['發生地點']
-    endtime = positionTime-datetime.timedelta(minutes=5)
-    startTime = endtime-datetime.timedelta(hours=before_event_hour)
-    
-    # fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
-    
-    # x_consecutive = plot_data.loc[startTime:endtime,['cover_area_pct']]
-    
-    # ax = x_consecutive.plot(figsize=(30,10),ylim=(0,1))
-    # plt.savefig(fname=f'./output/areaPct/{i}_{evt_what}.png')
+    plot_data = aa3.copy().set_index('id_mins')
+    plot_data['event_f'] = 0
+    plot_data['event_c'] = 0
+    for i, evt in events.iterrows():
+        print(f' == work on {i} event == ')
+        positionTime = evt['positionTime']
+        evt_x = evt['X']
+        evt_y = evt['Y']
+        evt_what = evt['事件分類']
+        發生地點 = evt['發生地點']
+        endtime = positionTime-datetime.timedelta(minutes=5)
+        startTime = endtime-datetime.timedelta(minutes=before_event_minutes)
+        
+        # fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
+        
+        # x_consecutive = plot_data.loc[startTime:endtime,['cover_area_pct']]
+        
+        # ax = x_consecutive.plot(figsize=(30,10),ylim=(0,1))
+        # plt.savefig(fname=f'./output/areaPct/{i}_{evt_what}.png')
 
-    plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
-    plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
+        plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
+        plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
 
-plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_hour}hr.csv')
+    plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_hour}hr.csv')
+
+for expand in range(1, 6):
+    for before_event_minutes in [15,30,60,90,120,180]:
+        get_analyze_data(byMin_coverArea, expand=expand, before_event_minutes=before_event_minutes)
