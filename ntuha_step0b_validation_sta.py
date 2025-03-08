@@ -96,5 +96,5 @@ events['endTime'] = pd.to_datetime(events['日期'] + ' ' + events['結束時間
 
 # Analyze position error
 position_error_df = analyze_position_error(events, txyzPds)
-position_error_df.to_csv('../output/position_error_analysis.csv', index=False)
+position_error_df.to_csv('../output/analysis/position_error_analysis.csv', index=False)
 
