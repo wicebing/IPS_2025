@@ -268,6 +268,6 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
 
     plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}hr.csv')
 
-for expand in range(1, 6):
-    for before_event_minutes in [15,30,60,90,120,180]:
+for expand in range(1, 4):
+    for before_event_minutes in [15,30,45,60,90,120]:
         get_analyze_data(byMin_coverArea, expand=expand, before_event_minutes=before_event_minutes)

@@ -117,10 +117,12 @@ def plot_trajectory(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=Fa
         ax.scatter(scale*(evt_x-x_min),scale*(evt_y-y_min), marker='P', s =88, c='lightyellow')
 
     # Set plot limits
-    major_ticks = np.arange(0, 1125, grid_size)
+    major_ticks = np.arange(0, 25, 1)
     ax.grid(which='major', alpha=0.5, linestyle='--')
-    ax.set_xticks(major_ticks)
-    ax.set_yticks(major_ticks)
+    ax.set_xticks(major_ticks * grid_size)
+    ax.set_yticks(major_ticks * grid_size)
+    ax.set_xticklabels(major_ticks)
+    ax.set_yticklabels(major_ticks)
     if(not grid):
         plt.xticks([])
         plt.yticks([])
