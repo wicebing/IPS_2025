@@ -12,7 +12,7 @@ library(MASS)
 require(boot)
 
 
-indoorPosition <- read.csv("C:/Users/USER/Downloads/IPS/areaPct_exp1_30hr.csv")
+indoorPosition <- read.csv("C:/Users/USER/Downloads/IPS/areaPct_exp2_45mins.csv")
 data_all <- indoorPosition
 
 #data_all$ev <- with(data_all, event==2 | event==1)

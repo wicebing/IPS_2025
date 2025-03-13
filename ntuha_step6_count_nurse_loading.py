@@ -104,7 +104,6 @@ position_diff_cols = [col for col in load_all.columns if col.startswith('positio
 load_all['position_diff_all'] = load_all[position_diff_cols].sum(axis=1)
 load_all['mps_all'] = -1*load_all['position_diff_all']/load_all['time_diff_all']
 
-load_all['event'] = 0
 load_all = load_all.set_index('id_mins')
 
 mps_cols = [col for col in load_all.columns if col.startswith('mps_')]
@@ -152,7 +151,7 @@ for k in mps_cols:
     if k == 'mps_all': continue
     temp = ana.loc[:,['id_mins',k,'event_c','event_f','weekday','hour']]
     temp.columns = ['id_mins','mps','event_c','event_f','weekday','hour']
-    analysis_.append(temp)
+    analysis_.append(temp.dropna())
 
 analysis = pd.concat(analysis_, axis=0, ignore_index=True)
 # jjj2 = analysis.groupby('event').agg({'mps': ['mean','std']})
