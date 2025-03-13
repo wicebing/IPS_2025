@@ -16,7 +16,7 @@ os.makedirs(databank_filepath,exist_ok=True)
 
 local_timezone = pytz.timezone('Asia/Taipei') 
  
-select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017']
+select_beacons =['N002', 'N003', 'N004', 'N005', 'N006', 'N007', 'N008', 'N017', 'N029', 'N030']
 beacon_ids = select_beacons #utils.get_beacons()
 print('=== load beacons ids ===')
 
@@ -139,13 +139,12 @@ def plot_coords(aa2, grid=False):
             ax.add_patch(rect)
 
         # Set plot limits
-        major_ticks = np.arange(0, 1125, grid_size)
+        major_ticks = np.arange(0, 25, 1)
         ax.grid(which='major', alpha=0.5, linestyle='--')
-        ax.set_xticks(major_ticks)
-        ax.set_yticks(major_ticks)
-        if not grid:
-            plt.xticks([])
-            plt.yticks([])
+        ax.set_xticks(major_ticks * grid_size)
+        ax.set_yticks(major_ticks * grid_size)
+        ax.set_xticklabels(major_ticks)
+        ax.set_yticklabels(major_ticks)
 
         ax.set_xlim(0, scale * (x_max - x_min))
         ax.set_ylim(0, scale * (y_max - y_min))
@@ -153,14 +152,13 @@ def plot_coords(aa2, grid=False):
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_title(f'Position heatmap_{id_mins.strftime("%Y%m%d_%H%M")}')
+        plt.grid(True)
 
         pic_filepath = f'../output/coords/{id_mins.strftime("%Y%m%d_%H%M")}.png'
         os.makedirs(os.path.dirname(pic_filepath), exist_ok=True)
 
         plt.savefig(fname=pic_filepath)
         print(f' === complete {id_mins} image === ')
-
-# plot_coords(aa2) plot_all_area_coords()
 
 
 # i want to plot all_area_coords on the background map to check it
@@ -191,12 +189,12 @@ def plot_all_area_coords():
         ax.add_patch(rect)
 
     # Set plot limits
-    major_ticks = np.arange(0, 1125, grid_size)
+    major_ticks = np.arange(0, 25, 1)
     ax.grid(which='major', alpha=0.5, linestyle='--')
-    ax.set_xticks(major_ticks)
-    ax.set_yticks(major_ticks)
-    plt.xticks([])
-    plt.yticks([])
+    ax.set_xticks(major_ticks * grid_size)
+    ax.set_yticks(major_ticks * grid_size)
+    ax.set_xticklabels(major_ticks)
+    ax.set_yticklabels(major_ticks)
 
     ax.set_xlim(0, scale * (x_max - x_min))
     ax.set_ylim(0, scale * (y_max - y_min))
@@ -204,6 +202,7 @@ def plot_all_area_coords():
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_title(f'Position heatmap_all_area_coords')
+    plt.grid(True)
 
     pic_filepath = f'../output/all_area_coords.png'
     os.makedirs(os.path.dirname(pic_filepath), exist_ok=True)
@@ -211,6 +210,8 @@ def plot_all_area_coords():
     plt.savefig(fname=pic_filepath)
     print(f' === complete all_area_coords image === ')
 
+# plot_coords(aa2)
+# plot_all_area_coords()
 
 def get_analyze_data(df, expand=3, before_event_minutes=60):
     aa2 = df.copy()
@@ -231,14 +232,12 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
     akk = aa3.groupby(['weekday','hour']).agg({'cover_area_pct': ['mean','std']})
     akk = akk.reset_index()
     akk = akk.pivot(columns='weekday', index='hour')
-    akk.to_csv(f'../output/areaPct_report_bydayhour_exp{expand}_{before_event_minutes}hr.csv')
+    akk.to_csv(f'../output/areaPct_report_bydayhour_exp{expand}_{before_event_minutes}mins.csv')
 
     # plot_coords(aa3)
 
     # Load the event timePoint
-    events = pd.read_excel("../databank/events_2025_d.xlsx")
-    events['日期'] = events['日期'].astype(str)
-    events['時間'] = events['時間'].astype(str)
+    events = pd.read_excel("../databank/events_2025_d.xlsx",dtype={'日期':str,'時間':str})
     events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
     events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
@@ -266,7 +265,7 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
         plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
         plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
 
-    plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}hr.csv')
+    plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}mins.csv')
 
 for expand in range(1, 4):
     for before_event_minutes in [15,30,45,60,90,120]:

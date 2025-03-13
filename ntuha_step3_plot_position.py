@@ -165,16 +165,14 @@ def Trajectory_plot(events, drawPds,hours=1,flag='origin',grid=False):
         plot_trajectory(dfs, evt_x-x_min, evt_y-y_min, evt_what, pic_name=f'{i+1}_{發生地點}_{positionTime.hour}_{hours}hour_{flag}', grid=grid)
  
 # Load the event timePoint
-events = pd.read_excel("../databank/events_2025.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
+events = pd.read_excel("../databank/events_2025.xlsx",dtype={'日期':str,'時間':str})
 events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
 # Load the beacon positionTime
 with open("../databank/pkl/origin.pkl", 'rb') as f:
     txyzPds_origin = pickle.load(f)
-with open("../databank/pkl/filter01.pkl", 'rb') as f:
+with open("../databank/pkl/filter02_dt.pkl", 'rb') as f:
     txyzPds = pickle.load(f)   
 # with open("./guider20240808/databank/pkl/KalmanSmooth01.pkl", 'rb') as f:
 #     txyzPds_smooth = pickle.load(f)

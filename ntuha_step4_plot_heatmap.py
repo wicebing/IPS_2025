@@ -7,7 +7,6 @@ from matplotlib.animation import FuncAnimation
 import matplotlib.patches as mpatches
 import matplotlib.colors as mcolors
 from matplotlib.colors import to_rgb, to_rgba
-import seaborn as sns; sns.set()
 
 import utils
 
@@ -220,14 +219,12 @@ def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
                      grid=grid)
  
 # Load the event timePoint
-events = pd.read_excel("../databank/events_2025_d.xlsx")
-events['日期'] = events['日期'].astype(str)
-events['時間'] = events['時間'].astype(str)
+events = pd.read_excel("../databank/events_2025.xlsx",dtype={'日期':str,'時間':str})
 events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
 # Load the beacon positionTime
-with open("../databank/pkl/filter01.pkl", 'rb') as f:
+with open("../databank/pkl/filter02_dt.pkl", 'rb') as f:
     txyzPds = pickle.load(f)   
 
 heatmap_plot(events, txyzPds,1,'heatmap_0',grid=False)       
