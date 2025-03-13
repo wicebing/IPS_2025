@@ -56,7 +56,7 @@ def preprocess_1(df, time_col='positionTime'):
     dfc.loc[temp.index,'time_diff']=0
     dfc.loc[temp.index,'position_diff']=0
 
-    return df
+    return dfc
 
 # Load the beacon positionTime
 with open("../databank/pkl/filter02_dt.pkl", 'rb') as f:
@@ -86,10 +86,6 @@ N002new = pd.concat([N002[:"2025-01-20 08:00:00"],N030["2025-01-20 08:01:00":]],
 aa.pop('N030')
 aa['N002'] = N002new.reset_index()
 
-
-
-
-
 loadings = []
 for k, v in aa.items():
     res = v.groupby(['id_mins', 'skip']).agg({'time_diff': 'sum', 'position_diff': 'sum'})
@@ -117,10 +113,13 @@ plot_data = load_all[mps_cols].copy()
 
 # Load the event timePoint
 events = pd.read_excel("../databank/events_2025_d.xlsx",dtype={'日期':str,'時間':str})
-events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y-%m-%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
+events['positionTime'] = pd.to_datetime(events['日期'] + ' ' + events['時間'], format='%Y%m%d %H%M', errors='coerce').dt.tz_localize(local_timezone)
 events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 
-plot_data['event'] = 0
+before_event_minutes = 60
+
+plot_data['event_f'] = 0
+plot_data['event_c'] = 0
 for i, evt in events.iterrows():
     print(f' == work on {i} event == ')
     positionTime = evt['positionTime']
@@ -129,21 +128,21 @@ for i, evt in events.iterrows():
     evt_what = evt['事件分類']
     發生地點 = evt['發生地點']
     endtime = positionTime-datetime.timedelta(minutes=5)
-    startTime = endtime-datetime.timedelta(hours=1)
+    startTime = endtime-datetime.timedelta(minutes=before_event_minutes)
     
-    fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
-    
-    x_consecutive = plot_data.loc[startTime:endtime][mps_cols]
-    
-    ax = x_consecutive.plot(figsize=(30,10),ylim=(-0.5,0.5))
-    plt.savefig(fname=f'./output/loading/{i}_{evt_what}.png')
+    # fig, ax = plt.subplots(figsize=(20, 10))  # adjust figsize for better view
+    # x_consecutive = plot_data.loc[startTime:endtime][mps_cols]
+    # ax = x_consecutive.plot(figsize=(30,10),ylim=(-0.5,0.5))
+    # plt.savefig(fname=f'./output/loading/{i}_{evt_what}.png')
 
-    plot_data.loc[startTime:endtime,['event']] = 1 if evt_what=='轉重症' else 2
+    plot_data.loc[startTime:endtime,['event_c']] = 1 if evt_what=='轉重症' else 0
+    plot_data.loc[startTime:endtime,['event_f']] = 1 if evt_what=='跌倒' else 0
 
-plot_data['event'] = plot_data['event'].fillna(0)
+jjjc = plot_data.groupby('event_c').agg({k: ['mean','std'] for k in mps_cols})
+jjjc.to_csv('../output/loadingC_report_byCart.csv')
 
-jjj = plot_data.groupby('event').agg({k: ['mean','std'] for k in mps_cols})
-jjj.to_csv('./output/loading_report_byCart.csv')
+jjjf = plot_data.groupby('event_f').agg({k: ['mean','std'] for k in mps_cols})
+jjjf.to_csv('../output/loadingF_report_byCart.csv')
 
 ana = plot_data.reset_index().copy()
 ana['weekday'] = ana['id_mins'].dt.weekday
@@ -151,18 +150,17 @@ ana['hour'] = ana['id_mins'].dt.hour
 analysis_ = [] 
 for k in mps_cols:
     if k == 'mps_all': continue
-    temp = ana.loc[:,['id_mins',k,'event','weekday','hour']]
-    temp.columns = ['id_mins','mps','event','weekday','hour']
+    temp = ana.loc[:,['id_mins',k,'event_c','event_f','weekday','hour']]
+    temp.columns = ['id_mins','mps','event_c','event_f','weekday','hour']
     analysis_.append(temp)
 
 analysis = pd.concat(analysis_, axis=0, ignore_index=True)
-jjj2 = analysis.groupby('event').agg({'mps': ['mean','std']})
-print(jjj2)
+# jjj2 = analysis.groupby('event').agg({'mps': ['mean','std']})
+# print(jjj2)
 
-analysis.dropna().to_csv('./analysis/loading_event.csv')
-
+analysis.dropna().to_csv('../output/analysis/loading_event.csv')
 
 akk = analysis.groupby(['weekday','hour']).agg({'mps': ['mean','std']})
 akk = akk.reset_index()
 akk = akk.pivot(columns='weekday', index='hour')
-akk.to_csv('./output/loading_report_bydayhour.csv')
+akk.to_csv('../output/loading_report_bydayhour.csv')
