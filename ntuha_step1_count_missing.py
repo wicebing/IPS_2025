@@ -113,7 +113,7 @@ temp_all = []
 temp_h_all = []
 for k,v in aa.items():
     lossTick[k] = {}
-    temp = v.groupby(['weekday','hour'])['time_diff'].sum()
+    temp = v.groupby(['weekday','hour'])['loss_tick'].sum()
     temp_h = v.groupby(['weekday','hour'])['id_hours'].nunique()
     
     temp = temp.reset_index()

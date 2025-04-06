@@ -35,10 +35,6 @@ def filter_single(df, time_col='positionTime'):
     dfc['time_diff'] = dfc[time_col].diff().dt.total_seconds()
     dfc['position_diff'] = (dfc['x_diff']**2 + dfc['y_diff']**2)**0.5
 
-    # Identify stationary periods where position_diff < 0.1
-    stationary = dfc['position_diff'] < 0.1
-    dfc.loc[stationary, 'time_diff'] = 0  # Set time_diff to zero for stationary periods
-
     dfc['group'] = dfc['position_diff'] > 2.5
     # Handle cases with large missing time gaps
     dfc['skip'] = 0
@@ -55,6 +51,10 @@ def filter_single(df, time_col='positionTime'):
     dfc['loss_tick'] = np.maximum(np.floor(dfc['time_diff'] - 1), 0).fillna(0)
     dfc['id_hours'] = dfc['positionTime'].dt.round('h')
     dfc['id_mins'] = dfc['positionTime'].dt.round('min')
+
+    # Identify stationary periods where position_diff < 0.1
+    stationary = (dfc['position_diff'] < 0.1) & (dfc['time_diff'] < 62) & (dfc['time_diff'] > 10)
+    dfc.loc[stationary, 'loss_tick'] = 0  # Set time_diff to zero for stationary periods
 
     return dfc
 
@@ -118,7 +118,7 @@ temp_all = []
 temp_h_all = []
 for k,v in aa.items():
     lossTick[k] = {}
-    temp = v.groupby(['weekday','hour'])['time_diff'].sum()
+    temp = v.groupby(['weekday','hour'])['loss_tick'].sum()
     temp_h = v.groupby(['weekday','hour'])['id_hours'].nunique()
     
     temp = temp.reset_index()
