@@ -43,13 +43,13 @@ def filter_single(df, time_col='positionTime'):
     dfc.loc[(dfc['time_diff']>10) & (dfc['position_diff']>2), 'group'] = True
     dfc['skip'] = dfc['skip'].cumsum()
     dfc['group'] = dfc['group'].cumsum()
-    
-    dfc['weekday'] = dfc[time_col].dt.weekday
-    dfc['hour'] = dfc[time_col].dt.hour
-    
+        
     dfc['loss_tick'] = np.maximum(np.floor(dfc['time_diff'] - 1),0).fillna(0)
     dfc['id_hours'] = dfc['positionTime'].dt.round('h')
     dfc['id_mins'] = dfc['positionTime'].dt.round('min')
+    
+    dfc['hour'] = dfc['id_hours'].dt.hour
+    dfc['weekday'] = dfc['id_hours'].dt.weekday
 
     return dfc
 

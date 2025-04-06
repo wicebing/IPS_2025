@@ -44,13 +44,16 @@ def filter_single(df, time_col='positionTime'):
     dfc['skip'] = dfc['skip'].cumsum()
     dfc['group'] = dfc['group'].cumsum()
 
-    dfc['weekday'] = dfc[time_col].dt.weekday
-    dfc['hour'] = dfc[time_col].dt.hour
+    
+    # dfc['hour'] = dfc[time_col].dt.hour
 
     # Adjust loss_tick calculation to account for stationary periods
     dfc['loss_tick'] = np.maximum(np.floor(dfc['time_diff'] - 1), 0).fillna(0)
     dfc['id_hours'] = dfc['positionTime'].dt.round('h')
     dfc['id_mins'] = dfc['positionTime'].dt.round('min')
+    
+    dfc['hour'] = dfc['id_hours'].dt.hour
+    dfc['weekday'] = dfc['id_hours'].dt.weekday
 
     # Identify stationary periods where position_diff < 0.1
     stationary = (dfc['position_diff'] < 0.1) & (dfc['time_diff'] < 62) & (dfc['time_diff'] > 10)
