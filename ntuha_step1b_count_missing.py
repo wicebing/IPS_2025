@@ -170,3 +170,15 @@ def export_lossTick_to_excel(lossTick, output_filename="../output/lossTick_repor
 
 # Example usage:
 export_lossTick_to_excel(lossTick)
+
+lossTick_byHourBeacon_ = []
+for k,v in aa.items():
+    lossTick[k] = {}
+    temp = v.groupby(['id_hours'])['loss_tick'].sum()
+    temp = temp.reset_index()
+    temp['beacon'] = k
+    lossTick_byHourBeacon_.append(temp)
+
+lossTick_byHourBeacon = pd.concat(lossTick_byHourBeacon_, axis=0, ignore_index=True)
+
+lossTick_byHourBeacon.to_csv("../output/lossTick_byHourBeacon.csv", index=False)
