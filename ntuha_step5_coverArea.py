@@ -128,7 +128,7 @@ def plot_coords(aa2, grid=False):
         for coord in axis_agg:
             x, y = coord
             rect = mpatches.Rectangle((y * grid_size, x * grid_size), grid_size, grid_size,
-                                      alpha=0.5, facecolor='yellow', edgecolor='yellow')
+                                      alpha=0.5, facecolor='green', edgecolor='green')
             ax.add_patch(rect)
 
         # Highlight coordinates in axis
@@ -211,7 +211,7 @@ def plot_all_area_coords():
     print(f' === complete all_area_coords image === ')
 
 # plot_coords(aa2)
-# plot_all_area_coords()
+plot_all_area_coords()
 
 def get_analyze_data(df, expand=3, before_event_minutes=60):
     aa2 = df.copy()

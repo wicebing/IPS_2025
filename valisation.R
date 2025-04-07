@@ -21,11 +21,16 @@ numSummary(indoorPosition[,"distance_to_route", drop=FALSE],
 with(indoorPosition, (t.test(distance_to_route, alternative='two.sided', 
                              mu=0.0, conf.level=.95)))
 
+cdf = ecdf(data_all$distance_to_route)
+curve(cdf,xlim = c(0,1.62))
+abline(h=0.8,lty=3)
+abline(v=0.554243,lty=4)
+
 
 # > numSummary(indoorPosition[,"distance_to_route", drop=FALSE], 
 # +            statistics=c("mean", "sd", "IQR", "quantiles"), quantiles=c(0,.25,.5,.75,1))
-#       mean        sd       IQR            0%       25%       50%       75%
-#  0.3456778 0.2815841 0.3868638 0.00007230183 0.1283084 0.2801197 0.5151722
+# mean        sd       IQR            0%       25%       50%       70%       75%      80%     100%   n
+# 0.3456778 0.2815841 0.3868638 0.00007230183 0.1283084 0.2801197 0.4581863 0.5151722 0.554243 1.613921 419
 #      100%   n
 #  1.613921 419
 # > with(indoorPosition, (t.test(distance_to_route, alternative='two.sided', 
