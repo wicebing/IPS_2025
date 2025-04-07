@@ -128,7 +128,7 @@ def plot_coords(aa2, grid=False):
         for coord in axis_agg:
             x, y = coord
             rect = mpatches.Rectangle((y * grid_size, x * grid_size), grid_size, grid_size,
-                                      alpha=0.5, facecolor='green', edgecolor='green')
+                                      alpha=0.5, facecolor='yellow', edgecolor='yellow')
             ax.add_patch(rect)
 
         # Highlight coordinates in axis
@@ -185,7 +185,7 @@ def plot_all_area_coords():
     for coord in all_area_coords:
         x, y = coord
         rect = mpatches.Rectangle((y * grid_size, x * grid_size), grid_size, grid_size,
-                                  alpha=0.5, facecolor='yellow', edgecolor='yellow')
+                                  alpha=0.5, facecolor='green', edgecolor='green')
         ax.add_patch(rect)
 
     # Set plot limits
@@ -268,5 +268,5 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
     plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}mins.csv')
 
 for expand in range(1, 4):
-    for before_event_minutes in [15,30,45,60,90,120]:
+    for before_event_minutes in [15,30,45,60,75,90]:
         get_analyze_data(byMin_coverArea, expand=expand, before_event_minutes=before_event_minutes)
