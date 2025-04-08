@@ -175,7 +175,7 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
             ax.set_title(f'Position heatmap_{beforeEvtMin}')
         
             # plt.axis('off')
-            plt.grid(True)
+            plt.grid(grid)
             pic_filepath = f'../output/heatmap/{pic_name}/{str(int(beforeEvtMin)).rjust(6,"0")}.png'
             os.makedirs(os.path.dirname(pic_filepath),exist_ok=True)
             
@@ -190,7 +190,6 @@ def plot_heatmap(dfs, evt_x, evt_y, evt_what, pic_name='evtTimePoint',grid=False
 def heatmap_plot(events, drawPds,hours=1,flag='origin',grid=False):
     for i, evt in events.iterrows():
         
-        if i < 67: continue
         print(f' == work on {i} event == ')
         positionTime = evt['positionTime']
         e_x = evt['X']
@@ -227,4 +226,4 @@ events = events[['positionTime','發生地點','事件分類', 'X', 'Y']]
 with open("../databank/pkl/filter02_dt.pkl", 'rb') as f:
     txyzPds = pickle.load(f)   
 
-heatmap_plot(events, txyzPds,1,'heatmap_0',grid=False)       
+heatmap_plot(events.iloc[[19,61,56,42],:], txyzPds,1,'heatmap_0',grid=True)       
