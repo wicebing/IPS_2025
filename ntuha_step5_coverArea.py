@@ -39,15 +39,19 @@ for i in range(25):  # Or range(25) if your grid is actually 0-24
 for j in range(25):  # Or range(25) if your grid is actually 0-24
     remove_coords.add((j, 0))     # grid_y = 0
     remove_coords.add((j, 24))    # grid_y = 24
-for i in range(8):   # grid_x <= 7 (0-7)
+for i in range(9):   # grid_x <= 7 (0-7)
     for j in range(16, 25):  # grid_y >= 16
         remove_coords.add((j, i))
 for i in range(3):   # grid_x <= 7 (0-7)
     for j in range(12, 16):  # grid_y >= 16
         remove_coords.add((j, i))
-for i in range(4,17):   # grid_x <= 7 (0-7)
+for i in range(5,17):   # grid_x <= 7 (0-7)
     for j in range(5):  # grid_y >= 16
         remove_coords.add((j, i))
+for i in range(21,25):   # grid_x <= 7 (0-7)
+    for j in range(21,25):  # grid_y >= 16
+        remove_coords.add((j, i))
+
 all_area_coords = all_area_coords-remove_coords
 
 def preprocess_1(df, time_col='positionTime'):
@@ -267,6 +271,6 @@ def get_analyze_data(df, expand=3, before_event_minutes=60):
 
     plot_data[['corrd_number', 'cover_area_pct', 'weekday', 'hour', 'event_c', 'event_f']].dropna().to_csv(f'../output/analysis/areaPct_exp{expand}_{before_event_minutes}mins.csv')
 
-for expand in range(1, 4):
+for expand in range(1, 5):
     for before_event_minutes in [15,30,45,60,75,90]:
         get_analyze_data(byMin_coverArea, expand=expand, before_event_minutes=before_event_minutes)
